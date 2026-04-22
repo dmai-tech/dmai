@@ -27,6 +27,7 @@ const TEMPLATE_HINTS = {
   爭議型: "提出一個普遍想法，然後用『但其實…』或『我反而覺得…』翻轉，給出有憑有據的新觀點，不要惡意挑釁。",
   條列型: "第一行寫一句鉤子總結，接著用 3-5 條短句列重點，每條 15 字內，結尾收斂。",
   抱怨碎念型: "像真人碎念、略帶幽默與自嘲，不要假掰，可以講實話但避免攻擊他人。",
+  共鳴型: "提出一個大家都經歷過但很少有人公開講的微小生活觀察、疑問或小糗事。**1-3 句、20-80 字**，要短到 3 秒就讀完。口語、不說教、不解釋、不結論——讓人看了覺得『對欸我也是』、忍不住想留言回答。可以用問句（「為什麼…」「到底有沒有人…」），也可以用自嘲陳述（「我到現在還是不會分…」）。禁止 emoji 開頭、禁止說教、禁止講大道理。",
 };
 
 const LENGTH_PROFILES = {
@@ -35,6 +36,12 @@ const LENGTH_PROFILES = {
   長: { min: 210, max: 280 },
   自由: { min: 100, max: 280 },
 };
+
+// 共鳴型 has its own length constraint — override whatever the user picked.
+function effectiveLengthProfile(template, lengthRange) {
+  if (template === "共鳴型") return { min: 20, max: 80 };
+  return LENGTH_PROFILES[lengthRange] ?? LENGTH_PROFILES["自由"];
+}
 
 const MODEL = "claude-sonnet-4-6";
 const RECENT_WINDOW = 10;
@@ -101,7 +108,7 @@ app.post("/api/generate", async (req, res) => {
     }
 
     const templateHint = TEMPLATE_HINTS[template] ?? TEMPLATE_HINTS["教學型"];
-    const lenProfile = LENGTH_PROFILES[lengthRange] ?? LENGTH_PROFILES["自由"];
+    const lenProfile = effectiveLengthProfile(template, lengthRange);
 
     const profileBlock = buildProfileBlock(profile, overrideVoice);
     const freshnessBlock = buildFreshnessBlock(recentHistory);
@@ -183,7 +190,7 @@ app.post("/api/regenerate-draft", async (req, res) => {
     }
 
     const templateHint = TEMPLATE_HINTS[template] ?? TEMPLATE_HINTS["教學型"];
-    const lenProfile = LENGTH_PROFILES[lengthRange] ?? LENGTH_PROFILES["自由"];
+    const lenProfile = effectiveLengthProfile(template, lengthRange);
 
     const profileBlock = buildProfileBlock(profile, overrideVoice);
     const freshnessBlock = buildFreshnessBlock(recentHistory);
