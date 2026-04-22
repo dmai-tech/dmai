@@ -386,6 +386,97 @@
       line-height: 1.6;
     }
 
+    /* ========== Roll (抽抽樂) ========== */
+    .roll-stage {
+      text-align: center;
+      padding: 48px 20px 32px;
+      background: var(--paper);
+      border: 1px solid var(--line-soft);
+      border-radius: 3px;
+      margin-bottom: 24px;
+    }
+    .roll-btn {
+      background: var(--ink);
+      color: var(--cream);
+      border: none;
+      padding: 22px 56px;
+      border-radius: 3px;
+      font-family: inherit;
+      font-size: 13px;
+      letter-spacing: 0.4em;
+      font-weight: 500;
+      text-transform: uppercase;
+      cursor: pointer;
+      display: inline-flex;
+      align-items: center;
+      gap: 18px;
+      transition: background 0.25s ease, transform 0.15s ease;
+    }
+    .roll-btn:hover:not(:disabled) { background: #000; }
+    .roll-btn:active:not(:disabled) { transform: scale(0.98); }
+    .roll-btn:disabled { opacity: 0.55; cursor: not-allowed; }
+    .roll-dice {
+      font-size: 24px;
+      display: inline-block;
+      transition: transform 0.4s ease;
+    }
+    .roll-btn.rolling .roll-dice {
+      animation: rollSpin 0.6s linear infinite;
+    }
+    @keyframes rollSpin {
+      from { transform: rotate(0deg); }
+      to { transform: rotate(360deg); }
+    }
+    .roll-hint {
+      font-size: 11.5px;
+      color: var(--muted);
+      margin-top: 20px;
+      letter-spacing: 0.04em;
+    }
+    .roll-card {
+      background: var(--paper);
+      border: 1px solid var(--line-soft);
+      border-radius: 3px;
+      padding: 44px 40px 32px;
+      margin-bottom: 16px;
+      position: relative;
+    }
+    .roll-domain {
+      font-family: "Noto Serif TC", serif;
+      font-size: 11px;
+      color: var(--muted);
+      letter-spacing: 0.28em;
+      text-transform: uppercase;
+      margin-bottom: 28px;
+      text-align: center;
+    }
+    .roll-text {
+      font-size: 20px;
+      line-height: 1.85;
+      color: var(--ink);
+      white-space: pre-wrap;
+      text-align: center;
+      font-weight: 500;
+      min-height: 2em;
+    }
+    .roll-card-footer {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-top: 32px;
+      padding-top: 20px;
+      border-top: 1px solid var(--line-soft);
+      font-size: 10.5px;
+      color: var(--muted);
+      letter-spacing: 0.22em;
+      text-transform: uppercase;
+      font-weight: 500;
+    }
+    .roll-actions {
+      display: flex;
+      gap: 8px;
+    }
+
     /* ========== History ========== */
     .history-toolbar {
       display: flex;
@@ -553,6 +644,7 @@
       <div class="topbar-brand">Threads · Copy Studio</div>
       <nav class="topbar-nav">
         <button class="tab-btn active" id="btnViewGen" type="button">生成器</button>
+        <button class="tab-btn" id="btnViewRoll" type="button">共鳴抽抽樂</button>
         <button class="tab-btn" id="btnViewHistory" type="button">歷史紀錄</button>
         <button class="tab-btn" id="btnViewProfile" type="button">個人檔案</button>
       </nav>
@@ -586,7 +678,6 @@
             <div class="field">
               <label>模板類型</label>
               <select id="template">
-                <option value="共鳴型">共鳴型 — 生活觀察 · 高互動率 · 極短</option>
                 <option value="教學型">教學型 — 分享小知識</option>
                 <option value="故事型">故事型 — 用場景帶觀點</option>
                 <option value="爭議型">爭議型 — 翻轉觀念</option>
@@ -620,6 +711,23 @@
           </form>
 
           <div id="results"></div>
+        </section>
+
+        <!-- Roll (共鳴抽抽樂) view -->
+        <section class="view" id="viewRoll">
+          <h1>共鳴抽抽樂</h1>
+          <p class="subtitle">不用打主題。AI 幫你隨機抽一則高互動率的生活觀察——有感就複製發文，沒感再抽一次。</p>
+          <div class="divider"></div>
+
+          <div class="roll-stage">
+            <button type="button" class="roll-btn" id="rollBtn">
+              <span class="roll-dice">🎲</span>
+              <span class="roll-label">抽 一 則</span>
+            </button>
+            <div class="roll-hint">點一下，AI 從 20 種生活領域隨機抽一個切角</div>
+          </div>
+
+          <div id="rollResult"></div>
         </section>
 
         <!-- History view -->
@@ -750,16 +858,18 @@
 
     // ========== View switching ==========
     function setView(name) {
-      ["Generator", "History", "Profile"].forEach((v) => {
+      ["Generator", "Roll", "History", "Profile"].forEach((v) => {
         $("view" + v).classList.toggle("active", "view" + v === "view" + name);
       });
       $("btnViewGen").classList.toggle("active", name === "Generator");
+      $("btnViewRoll").classList.toggle("active", name === "Roll");
       $("btnViewHistory").classList.toggle("active", name === "History");
       $("btnViewProfile").classList.toggle("active", name === "Profile");
       closeSidebar();
       window.scrollTo(0, 0);
     }
     $("btnViewGen").addEventListener("click", () => setView("Generator"));
+    $("btnViewRoll").addEventListener("click", () => setView("Roll"));
     $("btnViewHistory").addEventListener("click", () => { loadHistory(); setView("History"); });
     $("btnViewProfile").addEventListener("click", () => { loadProfile(); setView("Profile"); });
 
@@ -809,6 +919,73 @@
         $("trendList").innerHTML = `<li class="trend-empty">${escapeHtml(String(err.message || err))}</li>`;
       }
     }
+
+    // ========== Roll (抽抽樂) ==========
+    async function roll() {
+      const btn = $("rollBtn");
+      const result = $("rollResult");
+      btn.disabled = true;
+      btn.classList.add("rolling");
+
+      try {
+        const res = await fetch("/api/random-resonance", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            profile: readProfileLS(),
+            recentHistory: readHistoryLS().slice(-10),
+          }),
+        });
+        const data = await res.json();
+        if (!res.ok) throw new Error(data.error || "抽失敗");
+
+        const post = data.post;
+        const domain = data.domain || "";
+
+        // Save to history as a 共鳴抽 entry
+        const entry = {
+          id: `roll_${Date.now()}_${Math.random().toString(36).slice(2, 8)}`,
+          createdAt: new Date().toISOString(),
+          topic: `🎲 抽抽樂 · ${domain}`,
+          template: "共鳴型",
+          lengthRange: "自動",
+          drafts: [post],
+          ratings: [null],
+        };
+        appendHistoryLS(entry);
+
+        result.innerHTML = `
+          <div class="roll-card">
+            <div class="roll-domain">${escapeHtml(domain)}</div>
+            <div class="roll-text">${escapeHtml(post)}</div>
+            <div class="roll-card-footer">
+              <span>${countChars(post)} 字</span>
+              <div class="roll-actions">
+                <button class="copy-btn" id="rollCopy">Copy</button>
+              </div>
+            </div>
+          </div>
+        `;
+
+        $("rollCopy").addEventListener("click", () => {
+          navigator.clipboard.writeText(post).then(() => {
+            const cbtn = $("rollCopy");
+            cbtn.textContent = "Copied ✓";
+            cbtn.classList.add("copied");
+            setTimeout(() => {
+              cbtn.textContent = "Copy";
+              cbtn.classList.remove("copied");
+            }, 1500);
+          });
+        });
+      } catch (err) {
+        result.innerHTML = `<div class="error" style="text-align:center; padding:32px;">抽失敗：${escapeHtml(String(err.message || err))}</div>`;
+      } finally {
+        btn.disabled = false;
+        btn.classList.remove("rolling");
+      }
+    }
+    $("rollBtn")?.addEventListener("click", roll);
 
     // ========== History ==========
     let historyCache = [];

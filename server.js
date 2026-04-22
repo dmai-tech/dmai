@@ -172,6 +172,88 @@ ${topic.trim()}
   }
 });
 
+// ---- Random resonance post (抽抽樂) ----
+const RESONANCE_DOMAINS = [
+  "食物/飲食習慣",
+  "睡眠/起床",
+  "工作/上班",
+  "人際關係",
+  "購物/買東西",
+  "身體小毛病",
+  "手機/科技使用",
+  "天氣/季節",
+  "交通/通勤",
+  "洗澡/盥洗",
+  "家事/整理",
+  "金錢/花費",
+  "運動/懶惰",
+  "咖啡/飲料",
+  "寵物/動物",
+  "朋友/家人",
+  "童年記憶",
+  "時間感",
+  "流行/追劇",
+  "社群媒體",
+];
+
+app.post("/api/random-resonance", async (req, res) => {
+  try {
+    const { profile = {}, recentHistory = [] } = req.body ?? {};
+
+    const profileBlock = buildProfileBlock(profile, "");
+    const freshnessBlock = buildFreshnessBlock(recentHistory);
+    const domain = RESONANCE_DOMAINS[Math.floor(Math.random() * RESONANCE_DOMAINS.length)];
+    const seed = Math.random().toString(36).slice(2, 10);
+
+    const systemPrompt = `你是脆（Threads）上擅長寫「共鳴型爆款貼文」的繁體中文文案助手。
+
+你的任務：**隨機抽取**一個大家都經歷過但很少有人公開講的微小生活觀察、疑問或小糗事，寫成 1 則超短貼文。
+
+硬性規則：
+1. 使用繁體中文（台灣用語），避免大陸化詞彙。
+2. **嚴格 20-80 字、1-3 句**（中文字計數）。3 秒內要讀完。
+3. 句型優先選這幾種：
+   - 問句型：「為什麼…」「到底有沒有人…」「是不是只有我覺得…」
+   - 自嘲型：「我到現在還是不會…」「我承認我…」「我從來沒想過…」
+   - 對比型：「以前覺得…現在才發現…」
+4. **禁止**：emoji、說教、結論、引用數據、長篇、文青化、硬梆梆的詞（如「賦能」「乾貨」）。
+5. 要寫「讓人忍不住想留言說『我也是』」的感覺，不是「我要教你什麼」。
+6. 參考使用者個人檔案的語氣節奏，但不要每次都用「欸」或同樣口頭禪開頭。
+7. 輸出格式嚴格照下面，不要前言後記：
+===POST1===
+（貼文內容）
+===END===`;
+
+    const userPrompt = `${profileBlock}${freshnessBlock}
+
+【隨機主題領域】${domain}
+【random seed】${seed}
+
+請從「${domain}」這個領域，抽一則大家都經歷過但很少公開講的小觀察、小糗事或小疑問，寫成一則共鳴型貼文。`;
+
+    const response = await client.messages.create({
+      model: MODEL,
+      max_tokens: 400,
+      system: systemPrompt,
+      messages: [{ role: "user", content: userPrompt }],
+    });
+
+    const textBlock = response.content.find((b) => b.type === "text");
+    const raw = textBlock ? textBlock.text : "";
+    const posts = parsePosts(raw);
+
+    if (posts.length === 0) {
+      return res.status(500).json({ error: "抽失敗，請再試一次", raw });
+    }
+
+    res.json({ post: posts[0], domain, usage: response.usage });
+  } catch (err) {
+    console.error("random-resonance error:", err);
+    const message = err instanceof Anthropic.APIError ? `${err.status}: ${err.message}` : String(err);
+    res.status(500).json({ error: message });
+  }
+});
+
 // ---- Regenerate a single draft ----
 app.post("/api/regenerate-draft", async (req, res) => {
   try {
