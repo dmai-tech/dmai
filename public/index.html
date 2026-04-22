@@ -644,7 +644,7 @@
       <div class="topbar-brand">Threads · Copy Studio</div>
       <nav class="topbar-nav">
         <button class="tab-btn active" id="btnViewGen" type="button">生成器</button>
-        <button class="tab-btn" id="btnViewRoll" type="button">共鳴抽抽樂</button>
+        <button class="tab-btn" id="btnViewRoll" type="button">爆款抽抽樂</button>
         <button class="tab-btn" id="btnViewHistory" type="button">歷史紀錄</button>
         <button class="tab-btn" id="btnViewProfile" type="button">個人檔案</button>
       </nav>
@@ -713,10 +713,10 @@
           <div id="results"></div>
         </section>
 
-        <!-- Roll (共鳴抽抽樂) view -->
+        <!-- Roll (爆款抽抽樂) view -->
         <section class="view" id="viewRoll">
-          <h1>共鳴抽抽樂</h1>
-          <p class="subtitle">不用打主題。AI 幫你隨機抽一則高互動率的生活觀察——有感就複製發文，沒感再抽一次。</p>
+          <h1>爆款抽抽樂</h1>
+          <p class="subtitle">不用打主題。AI 隨機抽一則高互動率的短貼文——從日常共鳴到無厘頭荒謬都有，沒感就再抽一次。</p>
           <div class="divider"></div>
 
           <div class="roll-stage">
@@ -946,7 +946,7 @@
         const entry = {
           id: `roll_${Date.now()}_${Math.random().toString(36).slice(2, 8)}`,
           createdAt: new Date().toISOString(),
-          topic: `🎲 抽抽樂 · ${domain}`,
+          topic: `🎲 爆款抽抽樂 · ${domain}`,
           template: "共鳴型",
           lengthRange: "自動",
           drafts: [post],
