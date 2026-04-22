@@ -1,0 +1,17 @@
+{
+  "name": "cui-generator",
+  "version": "0.1.0",
+  "description": "脆（Threads）文案自動生成器 MVP",
+  "type": "module",
+  "main": "server.js",
+  "scripts": {
+    "start": "node server.js",
+    "dev": "node --watch server.js"
+  },
+  "dependencies": {
+    "@anthropic-ai/sdk": "^0.88.0",
+    "dotenv": "^16.4.5",
+    "express": "^4.19.2",
+    "google-trends-api": "^4.9.2"
+  }
+}

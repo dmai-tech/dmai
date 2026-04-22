@@ -1,0 +1,1156 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>脆文案生成器</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Noto+Serif+TC:wght@400;500;600&family=Noto+Sans+TC:wght@300;400;500;600&display=swap" rel="stylesheet" />
+  <style>
+    * { box-sizing: border-box; }
+    :root {
+      --cream: #EFE9DB;
+      --cream-deep: #E6DFCD;
+      --cream-light: #F7F3E9;
+      --paper: #FBF8F0;
+      --ink: #1A1916;
+      --ink-soft: #3A3833;
+      --muted: #8F887B;
+      --line: #D9D0B8;
+      --line-soft: #E8E0CA;
+      --sidebar-width: 280px;
+    }
+    html, body { margin: 0; padding: 0; height: 100%; }
+    body {
+      font-family: "Noto Sans TC", -apple-system, BlinkMacSystemFont, sans-serif;
+      background: var(--cream);
+      color: var(--ink);
+      line-height: 1.75;
+      font-weight: 400;
+      -webkit-font-smoothing: antialiased;
+      -moz-osx-font-smoothing: grayscale;
+    }
+
+    /* ========== Layout ========== */
+    .topbar {
+      background: var(--cream-deep);
+      border-bottom: 1px solid var(--line);
+      padding: 0;
+      position: sticky;
+      top: 0;
+      z-index: 30;
+    }
+    .topbar-inner {
+      max-width: 1080px;
+      margin: 0 auto;
+      padding: 16px 36px;
+      display: flex;
+      align-items: center;
+      gap: 40px;
+    }
+    .topbar-brand {
+      font-family: "Noto Serif TC", serif;
+      font-size: 11px;
+      letter-spacing: 0.4em;
+      color: var(--muted);
+      text-transform: uppercase;
+      white-space: nowrap;
+      padding-right: 32px;
+      border-right: 1px solid var(--line);
+    }
+    .topbar-nav {
+      display: flex;
+      gap: 4px;
+      flex-shrink: 0;
+    }
+    .tab-btn {
+      padding: 10px 22px;
+      font-family: inherit;
+      font-size: 11px;
+      letter-spacing: 0.25em;
+      text-transform: uppercase;
+      background: transparent;
+      border: 1px solid transparent;
+      color: var(--muted);
+      font-weight: 500;
+      cursor: pointer;
+      border-radius: 2px;
+      transition: all 0.25s ease;
+    }
+    .tab-btn:hover:not(.active) { color: var(--ink); }
+    .tab-btn.active {
+      color: var(--ink);
+      border-color: var(--ink);
+      background: var(--cream-light);
+    }
+
+    .layout {
+      display: grid;
+      grid-template-columns: var(--sidebar-width) 1fr;
+      min-height: calc(100vh - 64px);
+    }
+    .sidebar {
+      background: var(--cream-deep);
+      border-right: 1px solid var(--line);
+      padding: 36px 24px 32px;
+      overflow-y: auto;
+      max-height: calc(100vh - 64px);
+      position: sticky;
+      top: 64px;
+    }
+    .main { padding: 56px 40px 96px; }
+    .main-inner { max-width: 640px; margin: 0 auto; }
+
+    .menu-toggle {
+      display: none;
+      background: var(--ink);
+      color: var(--cream);
+      border: none;
+      width: 36px; height: 36px;
+      border-radius: 2px;
+      cursor: pointer;
+      font-size: 16px;
+      flex-shrink: 0;
+    }
+
+    /* ========== Sidebar ========== */
+    .sidebar-section { margin-bottom: 36px; }
+    .sidebar-section:last-child { margin-bottom: 0; }
+    .sidebar-heading {
+      font-family: "Noto Serif TC", serif;
+      font-size: 11px;
+      letter-spacing: 0.28em;
+      text-transform: uppercase;
+      color: var(--ink);
+      font-weight: 500;
+      margin: 0 0 14px;
+      padding-bottom: 10px;
+      border-bottom: 1px solid var(--line);
+    }
+    .sidebar-sub {
+      font-size: 11px;
+      color: var(--muted);
+      margin-bottom: 12px;
+      letter-spacing: 0.02em;
+    }
+    .trend-list { list-style: none; padding: 0; margin: 0; }
+    .trend-item {
+      padding: 8px 6px;
+      font-size: 13px;
+      cursor: pointer;
+      border-radius: 2px;
+      display: flex;
+      align-items: baseline;
+      justify-content: space-between;
+      gap: 8px;
+      transition: background 0.2s ease;
+      line-height: 1.45;
+    }
+    .trend-item:hover { background: var(--cream-light); }
+    .trend-keyword { color: var(--ink); flex: 1; }
+    .trend-traffic {
+      font-size: 10px;
+      color: var(--muted);
+      letter-spacing: 0.05em;
+      white-space: nowrap;
+    }
+    .trend-number {
+      color: var(--muted);
+      font-variant-numeric: tabular-nums;
+      font-size: 10px;
+      letter-spacing: 0.1em;
+      width: 20px;
+      flex-shrink: 0;
+    }
+    .trend-empty {
+      font-size: 12px;
+      color: var(--muted);
+      padding: 8px 6px;
+      line-height: 1.6;
+    }
+    .sidebar-link {
+      display: block;
+      width: 100%;
+      text-align: left;
+      background: transparent;
+      border: 1px solid var(--ink);
+      color: var(--ink);
+      padding: 12px 14px;
+      font-family: inherit;
+      font-size: 11px;
+      letter-spacing: 0.25em;
+      font-weight: 500;
+      text-transform: uppercase;
+      cursor: pointer;
+      border-radius: 2px;
+      transition: all 0.25s ease;
+    }
+    .sidebar-link:hover, .sidebar-link.active {
+      background: var(--ink);
+      color: var(--cream);
+    }
+
+    /* ========== Main header ========== */
+    h1 {
+      font-family: "Noto Serif TC", "Songti TC", serif;
+      font-size: 38px;
+      font-weight: 500;
+      letter-spacing: 0.04em;
+      margin: 0 0 14px;
+      line-height: 1.3;
+    }
+    .subtitle {
+      color: var(--muted);
+      font-size: 13px;
+      letter-spacing: 0.06em;
+      margin: 0 0 40px;
+      line-height: 1.6;
+    }
+    .divider { width: 32px; height: 1px; background: var(--ink); margin: 0 0 48px; }
+
+    /* ========== Cards / forms ========== */
+    .card {
+      background: var(--paper);
+      border: 1px solid var(--line-soft);
+      border-radius: 3px;
+      padding: 40px 36px;
+      margin-bottom: 24px;
+    }
+    label {
+      display: block;
+      font-size: 11px;
+      letter-spacing: 0.22em;
+      text-transform: uppercase;
+      color: var(--ink);
+      font-weight: 500;
+      margin-bottom: 10px;
+    }
+    .hint { font-size: 12.5px; color: var(--muted); margin-bottom: 14px; line-height: 1.6; }
+    textarea, input, select {
+      width: 100%;
+      padding: 14px 16px;
+      border: 1px solid var(--line);
+      border-radius: 2px;
+      font-size: 14px;
+      font-family: inherit;
+      background: var(--cream-light);
+      color: var(--ink);
+      line-height: 1.7;
+      transition: border-color 0.3s ease, background 0.3s ease;
+    }
+    textarea { resize: vertical; min-height: 108px; }
+    textarea::placeholder, input::placeholder { color: #B3AC9D; font-weight: 300; }
+    textarea:focus, input:focus, select:focus {
+      outline: none;
+      border-color: var(--ink);
+      background: #fff;
+    }
+    select {
+      appearance: none; -webkit-appearance: none;
+      background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='10' height='6' viewBox='0 0 10 6'><path d='M1 1l4 4 4-4' stroke='%231A1916' stroke-width='1.2' fill='none'/></svg>");
+      background-repeat: no-repeat; background-position: right 16px center; padding-right: 40px;
+    }
+    .field { margin-bottom: 28px; }
+    .field:last-of-type { margin-bottom: 0; }
+    .required-mark { color: var(--muted); font-weight: 300; margin-left: 4px; }
+
+    details.advanced { margin-top: 24px; border-top: 1px solid var(--line-soft); padding-top: 20px; }
+    details.advanced summary {
+      cursor: pointer;
+      font-size: 11px;
+      letter-spacing: 0.22em;
+      text-transform: uppercase;
+      color: var(--muted);
+      font-weight: 500;
+      list-style: none;
+    }
+    details.advanced summary::marker { display: none; }
+    details.advanced[open] summary { color: var(--ink); margin-bottom: 16px; }
+
+    button.primary {
+      background: var(--ink);
+      color: var(--cream);
+      border: none;
+      padding: 18px 28px;
+      border-radius: 2px;
+      font-family: inherit;
+      font-size: 12px;
+      letter-spacing: 0.3em;
+      font-weight: 500;
+      text-transform: uppercase;
+      cursor: pointer;
+      width: 100%;
+      transition: background 0.3s ease, transform 0.15s ease;
+    }
+    button.primary:hover:not(:disabled) { background: #000; }
+    button.primary:active:not(:disabled) { transform: scale(0.995); }
+    button.primary:disabled { opacity: 0.4; cursor: not-allowed; }
+    button.secondary {
+      background: transparent;
+      color: var(--ink);
+      border: 1px solid var(--ink);
+      padding: 14px 24px;
+      border-radius: 2px;
+      font-family: inherit;
+      font-size: 11px;
+      letter-spacing: 0.28em;
+      font-weight: 500;
+      text-transform: uppercase;
+      cursor: pointer;
+      transition: all 0.25s ease;
+    }
+    button.secondary:hover { background: var(--ink); color: var(--cream); }
+
+    .btn-row { display: flex; gap: 12px; margin-top: 8px; }
+    .btn-row > * { flex: 1; }
+
+    .error { color: #8C3A2E; font-size: 12.5px; margin-top: 14px; letter-spacing: 0.02em; }
+    .saved { color: #3A6E3F; font-size: 12px; letter-spacing: 0.1em; text-transform: uppercase; margin-top: 14px; }
+
+    /* ========== Results ========== */
+    #results { margin-top: 40px; }
+    .results-label {
+      font-family: "Noto Serif TC", serif;
+      font-size: 11px;
+      letter-spacing: 0.4em;
+      color: var(--muted);
+      text-transform: uppercase;
+      margin-bottom: 20px;
+      display: flex; align-items: center; gap: 14px;
+    }
+    .results-label::before, .results-label::after { content: ""; flex: 1; height: 1px; background: var(--line); }
+    .post {
+      background: var(--paper);
+      border: 1px solid var(--line-soft);
+      border-radius: 3px;
+      padding: 36px 36px 32px;
+      margin-bottom: 16px;
+      white-space: pre-wrap;
+    }
+    .post-header {
+      display: flex; justify-content: space-between; align-items: center;
+      margin-bottom: 22px; padding-bottom: 18px;
+      border-bottom: 1px solid var(--line-soft);
+      font-size: 10.5px; color: var(--muted);
+      letter-spacing: 0.25em; text-transform: uppercase; font-weight: 500;
+    }
+    .post-actions { display: flex; gap: 8px; align-items: center; }
+    .copy-btn {
+      background: transparent; color: var(--ink); border: 1px solid var(--ink);
+      padding: 7px 16px; font-size: 10px; letter-spacing: 0.28em;
+      font-weight: 500; text-transform: uppercase;
+      border-radius: 2px; cursor: pointer; transition: all 0.25s ease;
+      font-family: inherit;
+    }
+    .copy-btn:hover, .copy-btn.copied { background: var(--ink); color: var(--cream); }
+    .redraw-btn {
+      background: transparent;
+      color: var(--ink);
+      border: 1px solid var(--ink);
+      width: 30px; height: 30px;
+      border-radius: 50%;
+      cursor: pointer;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 14px;
+      padding: 0;
+      font-family: inherit;
+      transition: all 0.25s ease;
+    }
+    .redraw-btn:hover:not(:disabled) { background: var(--ink); color: var(--cream); }
+    .redraw-btn:disabled { opacity: 0.6; cursor: not-allowed; }
+    .redraw-btn.spinning { pointer-events: none; }
+    .redraw-btn.spinning .redraw-icon {
+      display: inline-block;
+      animation: spin 0.9s linear infinite;
+    }
+    @keyframes spin {
+      from { transform: rotate(0deg); }
+      to { transform: rotate(360deg); }
+    }
+    .post.regenerating .post-content { opacity: 0.4; }
+    .post-content { font-size: 15px; line-height: 1.9; color: var(--ink-soft); }
+    .loading {
+      text-align: center; color: var(--muted);
+      padding: 56px 20px; font-size: 11px;
+      letter-spacing: 0.35em; text-transform: uppercase;
+    }
+    .reshuffle-hint {
+      font-size: 11.5px;
+      color: var(--muted);
+      margin-top: 24px;
+      text-align: center;
+      letter-spacing: 0.03em;
+      line-height: 1.6;
+    }
+
+    /* ========== History ========== */
+    .history-toolbar {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      margin-bottom: 20px;
+      flex-wrap: wrap;
+    }
+    .history-toolbar input {
+      flex: 1 1 220px;
+      padding: 10px 14px;
+      font-size: 13px;
+    }
+    .history-filters {
+      display: flex;
+      gap: 4px;
+    }
+    .filter-chip {
+      background: transparent;
+      color: var(--muted);
+      border: 1px solid var(--line);
+      padding: 7px 14px;
+      font-size: 11px;
+      letter-spacing: 0.18em;
+      font-weight: 500;
+      text-transform: uppercase;
+      cursor: pointer;
+      border-radius: 2px;
+      font-family: inherit;
+      transition: all 0.2s ease;
+    }
+    .filter-chip:hover:not(.active) {
+      color: var(--ink);
+      border-color: var(--ink);
+    }
+    .filter-chip.active {
+      color: var(--cream);
+      background: var(--ink);
+      border-color: var(--ink);
+    }
+    .rate-btn {
+      background: transparent;
+      color: var(--muted);
+      border: 1px solid var(--line);
+      width: 28px; height: 28px;
+      border-radius: 50%;
+      cursor: pointer;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 13px;
+      padding: 0;
+      font-family: inherit;
+      transition: all 0.2s ease;
+    }
+    .rate-btn:hover { color: var(--ink); border-color: var(--ink); }
+    .rate-btn.active[data-rating="liked"] {
+      color: #fff; background: #3A6E3F; border-color: #3A6E3F;
+    }
+    .rate-btn.active[data-rating="skipped"] {
+      color: #fff; background: #8F887B; border-color: #8F887B;
+    }
+    .history-empty {
+      text-align: center; color: var(--muted);
+      padding: 48px 20px; font-size: 13px;
+      line-height: 1.8;
+    }
+    .history-entry {
+      background: var(--paper);
+      border: 1px solid var(--line-soft);
+      border-radius: 3px;
+      padding: 24px 28px;
+      margin-bottom: 14px;
+    }
+    .history-entry summary {
+      cursor: pointer; list-style: none;
+      display: flex; justify-content: space-between; align-items: flex-start;
+      gap: 16px;
+    }
+    .history-entry summary::-webkit-details-marker { display: none; }
+    .history-topic {
+      font-size: 15px; font-weight: 500; color: var(--ink);
+      line-height: 1.5;
+    }
+    .history-meta {
+      font-size: 10.5px; color: var(--muted);
+      letter-spacing: 0.18em; text-transform: uppercase;
+      margin-top: 8px;
+      font-weight: 500;
+    }
+    .history-actions {
+      display: flex; gap: 8px; flex-shrink: 0;
+    }
+    .history-btn {
+      background: transparent;
+      color: var(--muted);
+      border: 1px solid var(--line);
+      padding: 6px 12px;
+      font-size: 10px;
+      letter-spacing: 0.2em;
+      font-weight: 500;
+      text-transform: uppercase;
+      cursor: pointer;
+      border-radius: 2px;
+      font-family: inherit;
+      transition: all 0.2s ease;
+    }
+    .history-btn:hover { color: var(--ink); border-color: var(--ink); }
+    .history-btn.danger:hover { color: #8C3A2E; border-color: #8C3A2E; }
+    .history-drafts {
+      margin-top: 18px; padding-top: 18px;
+      border-top: 1px solid var(--line-soft);
+    }
+    .history-draft {
+      padding: 14px 0;
+      border-bottom: 1px dashed var(--line-soft);
+      font-size: 14px; line-height: 1.8; color: var(--ink-soft);
+      white-space: pre-wrap;
+    }
+    .history-draft:last-child { border-bottom: none; }
+    .history-draft-label {
+      font-size: 10px; color: var(--muted);
+      letter-spacing: 0.22em; text-transform: uppercase;
+      font-weight: 500; margin-bottom: 6px;
+      display: flex; justify-content: space-between; align-items: center;
+    }
+
+    /* ========== View switching ========== */
+    .view { display: none; }
+    .view.active { display: block; }
+
+    /* ========== Responsive ========== */
+    .sidebar-backdrop {
+      display: none;
+      position: fixed; inset: 0; background: rgba(0,0,0,0.25);
+      z-index: 25;
+    }
+    .sidebar-backdrop.open { display: block; }
+    @media (max-width: 900px) {
+      .menu-toggle { display: inline-flex; align-items: center; justify-content: center; }
+      .topbar-inner { padding: 14px 18px; gap: 16px; justify-content: space-between; }
+      .topbar-brand { display: none; }
+      .tab-btn { padding: 8px 14px; font-size: 10px; letter-spacing: 0.2em; }
+      .layout { grid-template-columns: 1fr; }
+      .sidebar {
+        position: fixed; top: 0; left: 0; bottom: 0;
+        width: var(--sidebar-width);
+        transform: translateX(-100%);
+        transition: transform 0.3s ease;
+        z-index: 40;
+        max-height: 100vh;
+      }
+      .sidebar.open { transform: translateX(0); }
+      .main { padding: 40px 20px 96px; }
+      h1 { font-size: 28px; }
+      .card { padding: 28px 22px; }
+      .post { padding: 28px 24px 24px; }
+    }
+  </style>
+</head>
+<body>
+  <header class="topbar">
+    <div class="topbar-inner">
+      <button class="menu-toggle" id="menuToggle" aria-label="Menu">☰</button>
+      <div class="topbar-brand">Threads · Copy Studio</div>
+      <nav class="topbar-nav">
+        <button class="tab-btn active" id="btnViewGen" type="button">生成器</button>
+        <button class="tab-btn" id="btnViewHistory" type="button">歷史紀錄</button>
+        <button class="tab-btn" id="btnViewProfile" type="button">個人檔案</button>
+      </nav>
+    </div>
+  </header>
+  <div class="sidebar-backdrop" id="backdrop"></div>
+
+  <div class="layout">
+    <aside class="sidebar" id="sidebar">
+      <div class="sidebar-section">
+        <h3 class="sidebar-heading">台灣熱搜 · 24h</h3>
+        <div class="sidebar-sub" id="trendsUpdated">載入中⋯</div>
+        <ul class="trend-list" id="trendList"></ul>
+      </div>
+    </aside>
+
+    <main class="main">
+      <div class="main-inner">
+        <!-- Generator view -->
+        <section class="view active" id="viewGenerator">
+          <h1>脆文案生成器</h1>
+          <p class="subtitle">輸入主題，AI 會依據你的個人檔案幫你擬三則草稿。</p>
+          <div class="divider"></div>
+
+          <form id="form" class="card">
+            <div class="field">
+              <label>這次想寫的主題<span class="required-mark">*</span></label>
+              <input id="topic" type="text" placeholder="例：我用 Claude 做了一個脆文案生成器" required />
+            </div>
+
+            <div class="field">
+              <label>模板類型</label>
+              <select id="template">
+                <option value="教學型">教學型 — 分享小知識</option>
+                <option value="故事型">故事型 — 用場景帶觀點</option>
+                <option value="爭議型">爭議型 — 翻轉觀念</option>
+                <option value="條列型">條列型 — 重點清單</option>
+                <option value="抱怨碎念型">抱怨碎念型 — 真實感</option>
+              </select>
+            </div>
+
+            <div class="field">
+              <label>字數範圍</label>
+              <select id="lengthRange">
+                <option value="自由">自由（100–280 字）</option>
+                <option value="短">短（80–130 字）— 快讀版</option>
+                <option value="中" selected>中（140–200 字）— 標準</option>
+                <option value="長">長（210–280 字）— 深度版</option>
+              </select>
+            </div>
+
+            <details class="advanced">
+              <summary>進階 · 覆寫這次的語調</summary>
+              <div style="padding-top: 16px;">
+                <div class="hint">只對這次生成有效，不會存到個人檔案。</div>
+                <textarea id="overrideVoice" rows="3" placeholder="臨時想要的語氣，例如：更嚴肅一點、帶點詩意⋯⋯"></textarea>
+              </div>
+            </details>
+
+            <div style="margin-top: 28px;">
+              <button type="submit" id="submit" class="primary">產 生 三 則 貼 文</button>
+            </div>
+            <div id="error" class="error"></div>
+          </form>
+
+          <div id="results"></div>
+        </section>
+
+        <!-- History view -->
+        <section class="view" id="viewHistory">
+          <h1>歷史紀錄</h1>
+          <p class="subtitle">你產過的所有草稿。AI 每次生成都會參考最近 10 次避免撞題。</p>
+          <div class="divider"></div>
+
+          <div class="history-toolbar">
+            <input id="historySearch" type="text" placeholder="搜尋主題或草稿內容⋯" />
+            <div class="history-filters">
+              <button type="button" class="filter-chip active" data-filter="all">全部</button>
+              <button type="button" class="filter-chip" data-filter="liked">👍 喜歡</button>
+              <button type="button" class="filter-chip" data-filter="skipped">跳過</button>
+            </div>
+            <button type="button" class="history-btn" id="exportHistoryBtn">匯出 .txt</button>
+          </div>
+
+          <div id="historyList"></div>
+        </section>
+
+        <!-- Profile view -->
+        <section class="view" id="viewProfile">
+          <h1>個人檔案</h1>
+          <p class="subtitle">填這裡一次，AI 每次生成都會自動讀，不用每篇都重打。</p>
+          <div class="divider"></div>
+
+          <form id="profileForm" class="card">
+            <div class="field">
+              <label>稱呼</label>
+              <div class="hint">AI 內部認識你的方式，可留空。</div>
+              <input id="p_name" type="text" placeholder="嘟敏" />
+            </div>
+
+            <div class="field">
+              <label>個性形容</label>
+              <div class="hint">3-5 個形容詞，讓 AI 拿捏你的整體調性。</div>
+              <input id="p_personality" type="text" placeholder="理性、愛碎念、自嘲、對新工具狂熱" />
+            </div>
+
+            <div class="field">
+              <label>講話習慣</label>
+              <div class="hint">口頭禪、語氣特徵、慣用語。</div>
+              <textarea id="p_voiceHabits" rows="3" placeholder="愛用「欸」「真的」開頭，常用「有夠⋯」「超扯」，講技術會自嘲看不懂，喜歡用問句結尾引討論"></textarea>
+            </div>
+
+            <div class="field">
+              <label>興趣領域</label>
+              <div class="hint">逗號分隔。</div>
+              <input id="p_interests" type="text" placeholder="AI 工具, 自媒體, 副業, 效率提升" />
+            </div>
+
+            <div class="field">
+              <label>代表貼文</label>
+              <div class="hint">貼 2-3 則最能代表你風格的舊文，AI 會模仿這些的語氣。</div>
+              <textarea id="p_sampleposts" rows="7" placeholder="欸我最近真的被 AI 洗腦了⋯⋯&#10;&#10;今天花了整個下午跟 Claude 鬥智，寫到後面我發現我根本不是在寫程式，是在寫作文&#10;&#10;做自媒體真的最需要的不是創意，是執行力"></textarea>
+            </div>
+
+            <div class="field">
+              <label>想避開的風格／詞彙</label>
+              <div class="hint">不想出現的詞、語氣、題材。</div>
+              <textarea id="p_avoid" rows="2" placeholder="不要太官腔、不要用 emoji 標題、避免「乾貨」「賦能」這類詞"></textarea>
+            </div>
+
+            <div class="btn-row">
+              <button type="button" id="profileCancel" class="secondary">取消</button>
+              <button type="submit" id="profileSave" class="primary">儲 存 檔 案</button>
+            </div>
+            <div id="profileSaved" class="saved" style="display:none;">✓ 已儲存</div>
+          </form>
+        </section>
+      </div>
+    </main>
+  </div>
+
+  <script>
+    // ========== State ==========
+    const $ = (id) => document.getElementById(id);
+    const genState = {
+      topic: "",
+      template: "",
+      overrideVoice: "",
+      lengthRange: "",
+      historyId: null,
+      posts: [],
+    };
+
+    // ========== Local storage ==========
+    const STORAGE_PROFILE = "dmai.profile";
+    const STORAGE_HISTORY = "dmai.history";
+    const MAX_HISTORY = 200;
+
+    function storageGet(key, fallback) {
+      try {
+        const raw = localStorage.getItem(key);
+        if (!raw) return fallback;
+        return JSON.parse(raw);
+      } catch { return fallback; }
+    }
+    function storageSet(key, value) {
+      try { localStorage.setItem(key, JSON.stringify(value)); } catch (err) { console.error("localStorage write failed:", err); }
+    }
+
+    function readProfileLS() { return storageGet(STORAGE_PROFILE, {}); }
+    function writeProfileLS(profile) { storageSet(STORAGE_PROFILE, profile); }
+
+    function readHistoryLS() { return storageGet(STORAGE_HISTORY, []); }
+    function writeHistoryLS(list) {
+      const trimmed = list.length > MAX_HISTORY ? list.slice(list.length - MAX_HISTORY) : list;
+      storageSet(STORAGE_HISTORY, trimmed);
+    }
+    function appendHistoryLS(entry) {
+      const list = readHistoryLS();
+      list.push(entry);
+      writeHistoryLS(list);
+    }
+    function updateHistoryLS(id, patch) {
+      const list = readHistoryLS();
+      const i = list.findIndex((e) => e.id === id);
+      if (i < 0) return;
+      list[i] = { ...list[i], ...patch };
+      writeHistoryLS(list);
+    }
+    function deleteHistoryLS(id) {
+      const list = readHistoryLS().filter((e) => e.id !== id);
+      writeHistoryLS(list);
+    }
+
+    // ========== View switching ==========
+    function setView(name) {
+      ["Generator", "History", "Profile"].forEach((v) => {
+        $("view" + v).classList.toggle("active", "view" + v === "view" + name);
+      });
+      $("btnViewGen").classList.toggle("active", name === "Generator");
+      $("btnViewHistory").classList.toggle("active", name === "History");
+      $("btnViewProfile").classList.toggle("active", name === "Profile");
+      closeSidebar();
+      window.scrollTo(0, 0);
+    }
+    $("btnViewGen").addEventListener("click", () => setView("Generator"));
+    $("btnViewHistory").addEventListener("click", () => { loadHistory(); setView("History"); });
+    $("btnViewProfile").addEventListener("click", () => { loadProfile(); setView("Profile"); });
+
+    // ========== Sidebar toggle (mobile) ==========
+    const sidebar = $("sidebar");
+    const backdrop = $("backdrop");
+    function openSidebar() { sidebar.classList.add("open"); backdrop.classList.add("open"); }
+    function closeSidebar() { sidebar.classList.remove("open"); backdrop.classList.remove("open"); }
+    $("menuToggle").addEventListener("click", openSidebar);
+    backdrop.addEventListener("click", closeSidebar);
+
+    // ========== Trends ==========
+    async function loadTrends() {
+      try {
+        const res = await fetch("/api/trends");
+        const data = await res.json();
+        if (!res.ok) throw new Error(data.error || "抓不到熱搜");
+
+        const updated = new Date(data.updatedAt);
+        $("trendsUpdated").textContent = `更新 ${updated.toLocaleTimeString("zh-TW", { hour: "2-digit", minute: "2-digit" })}${data.cached ? " · 快取" : ""}`;
+
+        const list = $("trendList");
+        if (!data.items?.length) {
+          list.innerHTML = '<li class="trend-empty">目前沒抓到熱搜</li>';
+          return;
+        }
+
+        list.innerHTML = data.items
+          .map((it, i) => `
+            <li class="trend-item" data-keyword="${escapeAttr(it.keyword)}">
+              <span class="trend-number">${String(i + 1).padStart(2, "0")}</span>
+              <span class="trend-keyword">${escapeHtml(it.keyword)}</span>
+              ${it.traffic ? `<span class="trend-traffic">${escapeHtml(it.traffic)}</span>` : ""}
+            </li>
+          `).join("");
+
+        list.querySelectorAll(".trend-item").forEach((el) => {
+          el.addEventListener("click", () => {
+            const kw = el.dataset.keyword;
+            $("topic").value = `關於「${kw}」的看法或觀察`;
+            setView("Generator");
+            $("topic").focus();
+          });
+        });
+      } catch (err) {
+        $("trendsUpdated").textContent = "熱搜載入失敗";
+        $("trendList").innerHTML = `<li class="trend-empty">${escapeHtml(String(err.message || err))}</li>`;
+      }
+    }
+
+    // ========== History ==========
+    let historyCache = [];
+    let historyFilter = "all"; // "all" | "liked" | "skipped"
+
+    function loadHistory() {
+      // reverse so newest first
+      historyCache = readHistoryLS().slice().reverse();
+      if (!historyCache.length) {
+        $("historyList").innerHTML = '<div class="history-empty">還沒有紀錄。<br>去生成器產一份看看。</div>';
+        return;
+      }
+      applyHistoryFilter();
+    }
+
+    function applyHistoryFilter() {
+      const q = ($("historySearch")?.value ?? "").trim().toLowerCase();
+      let filtered = historyCache;
+
+      if (historyFilter !== "all") {
+        filtered = filtered.filter((e) =>
+          (e.ratings || []).some((r) => r === historyFilter)
+        );
+      }
+
+      if (q) {
+        filtered = filtered.filter((e) => {
+          if ((e.topic || "").toLowerCase().includes(q)) return true;
+          return (e.drafts || []).some((d) => (d || "").toLowerCase().includes(q));
+        });
+      }
+
+      if (filtered.length === 0) {
+        $("historyList").innerHTML = '<div class="history-empty">沒有符合的紀錄。</div>';
+        return;
+      }
+      renderHistory(filtered);
+    }
+
+    function renderHistory(entries) {
+      const listEl = $("historyList");
+      listEl.innerHTML = entries.map((entry) => {
+        const date = new Date(entry.createdAt);
+        const dateLabel = date.toLocaleString("zh-TW", {
+          month: "2-digit", day: "2-digit",
+          hour: "2-digit", minute: "2-digit",
+        });
+        const ratings = entry.ratings || [];
+        const draftsHtml = (entry.drafts || []).map((d, i) => {
+          const rating = ratings[i] || null;
+          const likedActive = rating === "liked" ? "active" : "";
+          const skippedActive = rating === "skipped" ? "active" : "";
+          return `
+          <div class="history-draft">
+            <div class="history-draft-label">
+              <span>Draft ${String(i + 1).padStart(2, "0")} · ${countChars(d)} 字${rating ? " · " + (rating === "liked" ? "已按讚" : "已跳過") : ""}</span>
+              <span style="display:inline-flex; gap:6px; align-items:center;">
+                <button class="rate-btn ${likedActive}" data-action="rate" data-rating="liked" data-id="${entry.id}" data-idx="${i}" title="喜歡這則">👍</button>
+                <button class="rate-btn ${skippedActive}" data-action="rate" data-rating="skipped" data-id="${entry.id}" data-idx="${i}" title="跳過這則">✕</button>
+                <button class="history-btn" data-action="copy" data-id="${entry.id}" data-idx="${i}">Copy</button>
+              </span>
+            </div>
+            ${escapeHtml(d)}
+          </div>
+        `;
+        }).join("");
+        return `
+          <details class="history-entry">
+            <summary>
+              <div>
+                <div class="history-topic">${escapeHtml(entry.topic)}</div>
+                <div class="history-meta">${dateLabel} · ${entry.template || ""}${entry.lengthRange ? " · " + entry.lengthRange : ""} · ${entry.drafts?.length || 0} 則</div>
+              </div>
+              <div class="history-actions">
+                <button class="history-btn danger" data-action="delete" data-id="${entry.id}">Delete</button>
+              </div>
+            </summary>
+            <div class="history-drafts">${draftsHtml}</div>
+          </details>
+        `;
+      }).join("");
+
+      listEl.querySelectorAll("[data-action]").forEach((btn) => {
+        btn.addEventListener("click", async (ev) => {
+          ev.preventDefault();
+          ev.stopPropagation();
+          const action = btn.dataset.action;
+          const id = btn.dataset.id;
+
+          if (action === "delete") {
+            if (!confirm("確定刪除這筆紀錄？")) return;
+            deleteHistoryLS(id);
+            loadHistory();
+          } else if (action === "copy") {
+            const entry = historyCache.find((e) => e.id === id);
+            const idx = parseInt(btn.dataset.idx, 10);
+            const text = entry?.drafts?.[idx] ?? "";
+            if (!text) return;
+            navigator.clipboard.writeText(text).then(() => {
+              btn.textContent = "Copied ✓";
+              setTimeout(() => { btn.textContent = "Copy"; }, 1500);
+            });
+          } else if (action === "rate") {
+            const idx = parseInt(btn.dataset.idx, 10);
+            const entry = historyCache.find((e) => e.id === id);
+            if (!entry) return;
+            const currentRating = (entry.ratings || [])[idx] || null;
+            const newRating = currentRating === btn.dataset.rating ? null : btn.dataset.rating;
+            const ratings = Array.isArray(entry.ratings) ? entry.ratings.slice() : (entry.drafts || []).map(() => null);
+            while (ratings.length < (entry.drafts || []).length) ratings.push(null);
+            ratings[idx] = newRating;
+            entry.ratings = ratings;
+            updateHistoryLS(id, { ratings });
+            applyHistoryFilter();
+          }
+        });
+      });
+    }
+
+    function exportHistory() {
+      if (!historyCache.length) {
+        alert("還沒有紀錄可以匯出");
+        return;
+      }
+      const lines = [];
+      lines.push("=== 脆文案生成器 · 歷史草稿匯出 ===");
+      lines.push(`匯出時間：${new Date().toLocaleString("zh-TW")}`);
+      lines.push(`共 ${historyCache.length} 筆`);
+      lines.push("");
+      historyCache.forEach((e, i) => {
+        const date = new Date(e.createdAt).toLocaleString("zh-TW");
+        lines.push(`─── #${i + 1} ───`);
+        lines.push(`時間：${date}`);
+        lines.push(`主題：${e.topic}`);
+        lines.push(`模板：${e.template}${e.lengthRange ? " · " + e.lengthRange : ""}`);
+        (e.drafts || []).forEach((d, j) => {
+          const r = (e.ratings || [])[j];
+          const tag = r === "liked" ? " [👍]" : r === "skipped" ? " [skip]" : "";
+          lines.push(`\n[Draft ${j + 1}${tag}]`);
+          lines.push(d);
+        });
+        lines.push("");
+      });
+      const blob = new Blob([lines.join("\n")], { type: "text/plain;charset=utf-8" });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement("a");
+      a.href = url;
+      a.download = `cui-history-${Date.now()}.txt`;
+      a.click();
+      URL.revokeObjectURL(url);
+    }
+
+    // Wire up history toolbar
+    document.addEventListener("DOMContentLoaded", () => {
+      $("historySearch")?.addEventListener("input", () => applyHistoryFilter());
+      $("exportHistoryBtn")?.addEventListener("click", exportHistory);
+      document.querySelectorAll(".filter-chip").forEach((chip) => {
+        chip.addEventListener("click", () => {
+          document.querySelectorAll(".filter-chip").forEach((c) => c.classList.remove("active"));
+          chip.classList.add("active");
+          historyFilter = chip.dataset.filter;
+          applyHistoryFilter();
+        });
+      });
+    });
+
+    // ========== Profile ==========
+    const profileFields = ["name", "personality", "voiceHabits", "interests", "sampleposts", "avoid"];
+    function loadProfile() {
+      const data = readProfileLS();
+      profileFields.forEach((k) => { $("p_" + k).value = data[k] || ""; });
+    }
+
+    $("profileForm").addEventListener("submit", (e) => {
+      e.preventDefault();
+      const body = {};
+      profileFields.forEach((k) => { body[k] = $("p_" + k).value; });
+      writeProfileLS(body);
+      const saved = $("profileSaved");
+      saved.style.display = "block";
+      setTimeout(() => { saved.style.display = "none"; }, 2000);
+    });
+
+    $("profileCancel").addEventListener("click", () => {
+      loadProfile();
+      setView("Generator");
+    });
+
+    // ========== Generator ==========
+    $("form").addEventListener("submit", async (e) => {
+      e.preventDefault();
+      const errorEl = $("error");
+      const submitBtn = $("submit");
+      const resultsEl = $("results");
+
+      errorEl.textContent = "";
+      resultsEl.innerHTML = '<div class="loading">產 生 中 · 約 15 – 25 秒</div>';
+      submitBtn.disabled = true;
+      submitBtn.textContent = "產 生 中⋯⋯";
+
+      const body = {
+        topic: $("topic").value,
+        template: $("template").value,
+        overrideVoice: $("overrideVoice").value,
+        lengthRange: $("lengthRange").value,
+        profile: readProfileLS(),
+        recentHistory: readHistoryLS().slice(-10),
+      };
+
+      try {
+        const res = await fetch("/api/generate", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify(body),
+        });
+        const data = await res.json();
+        if (!res.ok) throw new Error(data.error || "產生失敗");
+        genState.topic = body.topic;
+        genState.template = body.template;
+        genState.overrideVoice = body.overrideVoice;
+        genState.lengthRange = body.lengthRange;
+
+        const entry = {
+          id: `gen_${Date.now()}_${Math.random().toString(36).slice(2, 8)}`,
+          createdAt: new Date().toISOString(),
+          topic: body.topic,
+          template: body.template,
+          lengthRange: body.lengthRange,
+          drafts: data.posts,
+          ratings: data.posts.map(() => null),
+        };
+        appendHistoryLS(entry);
+        genState.historyId = entry.id;
+        genState.posts = data.posts;
+        renderPosts(data.posts);
+      } catch (err) {
+        resultsEl.innerHTML = "";
+        errorEl.textContent = "錯誤：" + err.message;
+      } finally {
+        submitBtn.disabled = false;
+        submitBtn.textContent = "產 生 三 則 貼 文";
+      }
+    });
+
+    function renderPosts(posts) {
+      const header = '<div class="results-label">Drafts</div>';
+      const postsHtml = posts.map((content, i) => `
+        <div class="post" data-idx="${i}">
+          <div class="post-header">
+            <span>Draft ${String(i + 1).padStart(2, "0")} &nbsp;·&nbsp; ${countChars(content)} 字</span>
+            <div class="post-actions">
+              <button class="redraw-btn" data-idx="${i}" title="重抽這則" aria-label="重抽這則"><span class="redraw-icon">↻</span></button>
+              <button class="copy-btn" data-idx="${i}">Copy</button>
+            </div>
+          </div>
+          <div class="post-content">${escapeHtml(content)}</div>
+        </div>
+      `).join("");
+      const hint = `<div class="reshuffle-hint">點每則右上 ↻ 可以單獨重抽這則（保留其他兩則）</div>`;
+      $("results").innerHTML = header + postsHtml + hint;
+
+      $("results").querySelectorAll(".copy-btn").forEach((btn) => {
+        btn.addEventListener("click", () => {
+          const idx = parseInt(btn.dataset.idx, 10);
+          navigator.clipboard.writeText(genState.posts[idx]).then(() => {
+            btn.textContent = "Copied ✓";
+            btn.classList.add("copied");
+            setTimeout(() => {
+              btn.textContent = "Copy";
+              btn.classList.remove("copied");
+            }, 1600);
+          });
+        });
+      });
+
+      $("results").querySelectorAll(".redraw-btn").forEach((btn) => {
+        btn.addEventListener("click", async () => {
+          const idx = parseInt(btn.dataset.idx, 10);
+          await redrawOne(idx, btn);
+        });
+      });
+    }
+
+    async function redrawOne(idx, btn) {
+      if (!genState.topic) return;
+      const postEl = btn.closest(".post");
+      btn.classList.add("spinning");
+      btn.disabled = true;
+      postEl.classList.add("regenerating");
+
+      try {
+        const otherDrafts = genState.posts.filter((_, i) => i !== idx);
+        const res = await fetch("/api/regenerate-draft", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            topic: genState.topic,
+            template: genState.template,
+            overrideVoice: genState.overrideVoice,
+            lengthRange: genState.lengthRange,
+            otherDrafts,
+            profile: readProfileLS(),
+            recentHistory: readHistoryLS().slice(-10),
+          }),
+        });
+        const data = await res.json();
+        if (!res.ok) throw new Error(data.error || "重抽失敗");
+
+        genState.posts[idx] = data.post;
+
+        // Update the history entry we created at generate-time
+        if (genState.historyId) {
+          const list = readHistoryLS();
+          const entry = list.find((e) => e.id === genState.historyId);
+          if (entry && Array.isArray(entry.drafts)) {
+            entry.drafts[idx] = data.post;
+            if (Array.isArray(entry.ratings)) entry.ratings[idx] = null;
+            writeHistoryLS(list);
+          }
+        }
+        // update UI in place without full re-render to preserve other drafts' state
+        const contentEl = postEl.querySelector(".post-content");
+        const chars = [...data.post].length;
+        contentEl.textContent = data.post;
+        postEl.querySelector(".post-header span").textContent =
+          `Draft ${String(idx + 1).padStart(2, "0")}  ·  ${chars} 字`;
+      } catch (err) {
+        alert("重抽失敗：" + err.message);
+      } finally {
+        btn.classList.remove("spinning");
+        btn.disabled = false;
+        postEl.classList.remove("regenerating");
+      }
+    }
+
+    // ========== Helpers ==========
+    function countChars(s) { return [...s].length; }
+    function escapeHtml(s) { return String(s).replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;"); }
+    function escapeAttr(s) { return escapeHtml(s).replace(/"/g, "&quot;"); }
+
+    // ========== Init ==========
+    loadTrends();
+    loadProfile();
+  </script>
+</body>
+</html>
