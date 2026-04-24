@@ -3,7 +3,27 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>脆文案生成器</title>
+  <title>DM AI · 脆文案生成器</title>
+  <meta name="description" content="依你的個人語調＋台灣熱搜自動擬三則脆草稿，還有爆款抽抽樂隨機抽一則高互動率貼文。免註冊、資料存在你瀏覽器。" />
+  <meta name="theme-color" content="#EFE9DB" />
+
+  <!-- Open Graph / Facebook -->
+  <meta property="og:type" content="website" />
+  <meta property="og:title" content="DM AI · 脆文案生成器" />
+  <meta property="og:description" content="依你的個人語調＋台灣熱搜自動擬三則脆草稿｜爆款抽抽樂抽一則高互動率貼文｜免註冊，資料只存在你瀏覽器。" />
+  <meta property="og:url" content="https://dmai-tech.vercel.app/" />
+  <meta property="og:image" content="https://dmai-tech.vercel.app/og.svg" />
+  <meta property="og:image:width" content="1200" />
+  <meta property="og:image:height" content="630" />
+  <meta property="og:locale" content="zh_TW" />
+  <meta property="og:site_name" content="DM AI" />
+
+  <!-- Twitter -->
+  <meta name="twitter:card" content="summary_large_image" />
+  <meta name="twitter:title" content="DM AI · 脆文案生成器" />
+  <meta name="twitter:description" content="依你的語調＋台灣熱搜自動擬三則脆草稿｜爆款抽抽樂隨機抽一則。" />
+  <meta name="twitter:image" content="https://dmai-tech.vercel.app/og.svg" />
+
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
   <link href="https://fonts.googleapis.com/css2?family=Noto+Serif+TC:wght@400;500;600&family=Noto+Sans+TC:wght@300;400;500;600&display=swap" rel="stylesheet" />
@@ -209,6 +229,80 @@
     }
     .divider { width: 32px; height: 1px; background: var(--ink); margin: 0 0 48px; }
 
+    /* ========== Welcome hero ========== */
+    .welcome-hero {
+      background: var(--paper);
+      border: 1px solid var(--line-soft);
+      border-radius: 3px;
+      padding: 48px 44px 40px;
+      margin-bottom: 48px;
+      text-align: center;
+    }
+    .welcome-kicker {
+      font-family: "Noto Serif TC", serif;
+      font-size: 11px;
+      letter-spacing: 0.4em;
+      color: var(--muted);
+      text-transform: uppercase;
+      margin-bottom: 18px;
+    }
+    .welcome-title {
+      font-family: "Noto Serif TC", serif;
+      font-size: 46px;
+      font-weight: 500;
+      letter-spacing: 0.04em;
+      margin: 0 0 18px;
+      line-height: 1.2;
+      color: var(--ink);
+    }
+    .welcome-sub {
+      font-size: 14.5px;
+      color: var(--ink-soft);
+      line-height: 1.85;
+      max-width: 480px;
+      margin: 0 auto 36px;
+    }
+    .welcome-features {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 16px;
+      margin-bottom: 36px;
+      text-align: left;
+    }
+    .welcome-feature {
+      background: var(--cream-light);
+      border: 1px solid var(--line-soft);
+      border-radius: 3px;
+      padding: 20px 18px;
+    }
+    .welcome-feature-icon { font-size: 22px; margin-bottom: 10px; }
+    .welcome-feature-title {
+      font-size: 13px;
+      font-weight: 600;
+      color: var(--ink);
+      margin-bottom: 6px;
+      letter-spacing: 0.04em;
+    }
+    .welcome-feature-desc {
+      font-size: 12.5px;
+      color: var(--muted);
+      line-height: 1.7;
+    }
+    .welcome-cta-row {
+      display: flex;
+      gap: 12px;
+      justify-content: center;
+      flex-wrap: wrap;
+    }
+    .welcome-cta { min-width: 200px; }
+    @media (max-width: 640px) {
+      .welcome-hero { padding: 36px 22px 28px; }
+      .welcome-title { font-size: 34px; }
+      .welcome-features { grid-template-columns: 1fr; }
+      .welcome-cta-row { flex-direction: column; }
+      .welcome-cta { width: 100%; }
+    }
+
     /* ========== Cards / forms ========== */
     .card {
       background: var(--paper);
@@ -336,6 +430,26 @@
       letter-spacing: 0.25em; text-transform: uppercase; font-weight: 500;
     }
     .post-actions { display: flex; gap: 8px; align-items: center; }
+    .send-btn {
+      background: #1A1916;
+      color: #EFE9DB;
+      border: 1px solid #1A1916;
+      padding: 7px 14px;
+      font-size: 10px;
+      letter-spacing: 0.22em;
+      font-weight: 500;
+      text-transform: uppercase;
+      border-radius: 2px;
+      cursor: pointer;
+      font-family: inherit;
+      text-decoration: none;
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      transition: all 0.25s ease;
+    }
+    .send-btn:hover { background: #000; }
+    .send-btn::before { content: "✈"; font-size: 12px; }
     .copy-btn {
       background: transparent; color: var(--ink); border: 1px solid var(--ink);
       padding: 7px 16px; font-size: 10px; letter-spacing: 0.28em;
@@ -694,6 +808,34 @@
       <div class="main-inner">
         <!-- Generator view -->
         <section class="view active" id="viewGenerator">
+          <!-- Welcome hero (first-visit only) -->
+          <div class="welcome-hero" id="welcomeHero" hidden>
+            <div class="welcome-kicker">DM AI · THREADS COPY STUDIO</div>
+            <h2 class="welcome-title">你的脆貼文助手</h2>
+            <p class="welcome-sub">依你的語調 × 台灣熱搜，自動擬三則草稿。一鍵複製或直接發到脆。免註冊，資料只存在你的瀏覽器。</p>
+            <div class="welcome-features">
+              <div class="welcome-feature">
+                <div class="welcome-feature-icon">✍</div>
+                <div class="welcome-feature-title">主題生成器</div>
+                <div class="welcome-feature-desc">打一個主題，AI 產 3 則不同切角的草稿</div>
+              </div>
+              <div class="welcome-feature">
+                <div class="welcome-feature-icon">🎲</div>
+                <div class="welcome-feature-title">爆款抽抽樂</div>
+                <div class="welcome-feature-desc">沒靈感？隨機抽一則高互動率短貼文</div>
+              </div>
+              <div class="welcome-feature">
+                <div class="welcome-feature-icon">👤</div>
+                <div class="welcome-feature-title">個人檔案</div>
+                <div class="welcome-feature-desc">填一次，以後 AI 都用你的語氣寫</div>
+              </div>
+            </div>
+            <div class="welcome-cta-row">
+              <button type="button" class="primary welcome-cta" id="welcomeStart">開 始 使 用 ↓</button>
+              <button type="button" class="secondary welcome-cta" id="welcomeProfile">先 填 個 人 檔 案</button>
+            </div>
+          </div>
+
           <h1>脆文案生成器</h1>
           <p class="subtitle">輸入主題，AI 會依據你的個人檔案幫你擬三則草稿。</p>
           <div class="divider"></div>
@@ -1015,6 +1157,7 @@
               <span>${countChars(post)} 字</span>
               <div class="roll-actions">
                 <button class="copy-btn" id="rollCopy">Copy</button>
+                <a class="send-btn" href="${threadsIntentUrl(post)}" target="_blank" rel="noopener noreferrer">發到脆</a>
               </div>
             </div>
           </div>
@@ -1292,6 +1435,7 @@
             <div class="post-actions">
               <button class="redraw-btn" data-idx="${i}" title="重抽這則" aria-label="重抽這則"><span class="redraw-icon">↻</span></button>
               <button class="copy-btn" data-idx="${i}">Copy</button>
+              <a class="send-btn" href="${threadsIntentUrl(content)}" target="_blank" rel="noopener noreferrer">發到脆</a>
             </div>
           </div>
           <div class="post-content">${escapeHtml(content)}</div>
@@ -1378,10 +1522,38 @@
     function countChars(s) { return [...s].length; }
     function escapeHtml(s) { return String(s).replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;"); }
     function escapeAttr(s) { return escapeHtml(s).replace(/"/g, "&quot;"); }
+    function threadsIntentUrl(text) {
+      return "https://www.threads.net/intent/post?text=" + encodeURIComponent(String(text || ""));
+    }
+
+    // ========== Welcome hero ==========
+    const STORAGE_WELCOME_SEEN = "dmai.welcomeSeen";
+    function showWelcomeIfFirstVisit() {
+      const seen = localStorage.getItem(STORAGE_WELCOME_SEEN);
+      const hasProfile = Object.values(readProfileLS()).some((v) => (v || "").trim());
+      const hasHistory = readHistoryLS().length > 0;
+      if (!seen && !hasProfile && !hasHistory) {
+        $("welcomeHero").hidden = false;
+      }
+    }
+    function dismissWelcome() {
+      $("welcomeHero").hidden = true;
+      localStorage.setItem(STORAGE_WELCOME_SEEN, "1");
+    }
+    $("welcomeStart")?.addEventListener("click", () => {
+      dismissWelcome();
+      $("topic")?.focus();
+    });
+    $("welcomeProfile")?.addEventListener("click", () => {
+      dismissWelcome();
+      loadProfile();
+      setView("Profile");
+    });
 
     // ========== Init ==========
     loadTrends();
     loadProfile();
+    showWelcomeIfFirstVisit();
   </script>
 </body>
 </html>
