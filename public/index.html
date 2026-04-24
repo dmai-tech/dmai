@@ -941,22 +941,24 @@
 
         const post = data.post;
         const domain = data.domain || "";
+        const structure = data.structure || "";
 
         // Save to history as a 共鳴抽 entry
         const entry = {
           id: `roll_${Date.now()}_${Math.random().toString(36).slice(2, 8)}`,
           createdAt: new Date().toISOString(),
-          topic: `🎲 爆款抽抽樂 · ${domain}`,
-          template: "共鳴型",
+          topic: `🎲 爆款抽抽樂 · ${domain}｜${structure}`,
+          template: structure || "共鳴型",
           lengthRange: "自動",
           drafts: [post],
           ratings: [null],
         };
         appendHistoryLS(entry);
 
+        const domainLabel = structure ? `${domain} · ${structure}` : domain;
         result.innerHTML = `
           <div class="roll-card">
-            <div class="roll-domain">${escapeHtml(domain)}</div>
+            <div class="roll-domain">${escapeHtml(domainLabel)}</div>
             <div class="roll-text">${escapeHtml(post)}</div>
             <div class="roll-card-footer">
               <span>${countChars(post)} 字</span>
