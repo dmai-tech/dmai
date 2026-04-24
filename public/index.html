@@ -387,6 +387,35 @@
     }
 
     /* ========== Roll (抽抽樂) ========== */
+    .roll-mode-row {
+      display: flex;
+      justify-content: center;
+      gap: 8px;
+      margin-bottom: 28px;
+      flex-wrap: wrap;
+    }
+    .mode-chip {
+      background: transparent;
+      color: var(--muted);
+      border: 1px solid var(--line);
+      padding: 8px 16px;
+      font-size: 11.5px;
+      letter-spacing: 0.08em;
+      font-weight: 500;
+      cursor: pointer;
+      border-radius: 999px;
+      font-family: inherit;
+      transition: all 0.2s ease;
+    }
+    .mode-chip:hover:not(.active) {
+      color: var(--ink);
+      border-color: var(--ink);
+    }
+    .mode-chip.active {
+      color: var(--cream);
+      background: var(--ink);
+      border-color: var(--ink);
+    }
     .roll-stage {
       text-align: center;
       padding: 48px 20px 32px;
@@ -720,11 +749,16 @@
           <div class="divider"></div>
 
           <div class="roll-stage">
+            <div class="roll-mode-row">
+              <button type="button" class="mode-chip active" data-mode="mixed">🎲 全部混抽</button>
+              <button type="button" class="mode-chip" data-mode="emotional">💭 感嘆共鳴</button>
+              <button type="button" class="mode-chip" data-mode="structural">📐 結構爆款</button>
+            </div>
             <button type="button" class="roll-btn" id="rollBtn">
               <span class="roll-dice">🎲</span>
               <span class="roll-label">抽 一 則</span>
             </button>
-            <div class="roll-hint">點一下，AI 從 20 種生活領域隨機抽一個切角</div>
+            <div class="roll-hint" id="rollHint">全部混抽 — 兩種風格隨機各半</div>
           </div>
 
           <div id="rollResult"></div>
@@ -921,6 +955,22 @@
     }
 
     // ========== Roll (抽抽樂) ==========
+    let rollMode = "mixed";
+    const ROLL_MODE_HINTS = {
+      mixed: "全部混抽 — 兩種風格隨機各半",
+      emotional: "感嘆共鳴 — 短而戳心的「是不是只有我」式自嘲（15-55 字）",
+      structural: "結構爆款 — 遞迴／清單／冷知識／翻轉／對比五種結構（30-160 字）",
+    };
+    document.querySelectorAll(".mode-chip").forEach((chip) => {
+      chip.addEventListener("click", () => {
+        document.querySelectorAll(".mode-chip").forEach((c) => c.classList.remove("active"));
+        chip.classList.add("active");
+        rollMode = chip.dataset.mode;
+        const hint = $("rollHint");
+        if (hint) hint.textContent = ROLL_MODE_HINTS[rollMode] || "";
+      });
+    });
+
     async function roll() {
       const btn = $("rollBtn");
       const result = $("rollResult");
@@ -932,6 +982,7 @@
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({
+            mode: rollMode,
             profile: readProfileLS(),
             recentHistory: readHistoryLS().slice(-10),
           }),

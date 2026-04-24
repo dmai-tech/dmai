@@ -173,6 +173,17 @@ ${topic.trim()}
 });
 
 // ---- Random resonance post (抽抽樂) ----
+const RESONANCE_OPENERS = [
+  { name: "是不是只有我型", hint: "以「是不是只有我…」開頭，自嘲式共鳴" },
+  { name: "我承認型", hint: "以「我承認…」或「我到現在還是不會…」開頭，坦白式自嘲" },
+  { name: "為什麼型", hint: "以「為什麼…」開頭，直球提問讓人思考" },
+  { name: "有沒有人型", hint: "以「到底有沒有人…」開頭，尋求共鳴感" },
+  { name: "對比型", hint: "以「以前覺得…現在才發現…」開頭，時間對比" },
+  { name: "其實型", hint: "以「其實我…」開頭，坦白一個小秘密" },
+  { name: "直述型", hint: "直接敘述一件具體的小糗事，不用固定開頭詞" },
+  { name: "想很久才想通型", hint: "以「想很久才想通…」或「直到今天才發現…」開頭" },
+];
+
 const RESONANCE_STRUCTURES = [
   {
     name: "遞迴循環型",
@@ -226,15 +237,68 @@ const RESONANCE_DOMAINS = [
 
 app.post("/api/random-resonance", async (req, res) => {
   try {
-    const { profile = {}, recentHistory = [] } = req.body ?? {};
+    const { profile = {}, recentHistory = [], mode = "mixed" } = req.body ?? {};
 
     const profileBlock = buildProfileBlock(profile, "");
     const freshnessBlock = buildFreshnessBlock(recentHistory);
     const domain = RESONANCE_DOMAINS[Math.floor(Math.random() * RESONANCE_DOMAINS.length)];
-    const structure = RESONANCE_STRUCTURES[Math.floor(Math.random() * RESONANCE_STRUCTURES.length)];
     const seed = Math.random().toString(36).slice(2, 10);
 
-    const systemPrompt = `你是脆（Threads）上擅長寫「結構化爆款短貼文」的繁體中文文案助手。
+    // Decide mode: emotional / structural / mixed
+    let activeMode = mode;
+    if (mode === "mixed") {
+      activeMode = Math.random() < 0.5 ? "emotional" : "structural";
+    }
+
+    let systemPrompt, userPrompt, modeLabel;
+
+    if (activeMode === "emotional") {
+      // --- Emotional resonance mode (short, self-deprecating, relatable) ---
+      const opener = RESONANCE_OPENERS[Math.floor(Math.random() * RESONANCE_OPENERS.length)];
+      modeLabel = `感嘆共鳴型 · ${opener.name}`;
+
+      systemPrompt = `你是脆（Threads）上擅長寫「短而戳心」共鳴型貼文的繁體中文文案助手。
+
+你的任務：隨機抽一個大家都經歷過但很少公開講的微小生活觀察，寫成 1 則 1 秒讀完就笑／就點頭的短貼文。
+
+# 最高優先級三條
+A. **短**：嚴格 15-55 字、1-2 句。寧短勿長。
+B. **一看就懂**：不需要讀者思考、解讀、推理。
+C. **具體畫面**：看得到的東西（瑜伽墊、廚房、零食），禁止抽象（時間感、主詞）。
+
+# 金標準範例（請對齊這個水準）
+- 「是不是只有我買了瑜伽墊，結果最主要的功能是踩著走去廚房拿零食」
+- 「我承認我到現在還是不會分青椒跟甜椒」
+- 「為什麼我洗完澡反而比洗之前還累」
+- 「是不是只有我週二比週一更想請假」
+
+# 要避免的壞範例
+- 「鬧鐘響的前一秒才發現，我這 10 分鐘不是在睡，是在等鬧鐘響」← 轉彎太多
+- 「下午三點那個時間，感覺可以存在整整五個小時」← 太抽象
+- 「襪子洗完配對這件事，到底哪一隻襪子才是主詞」← 需要讀兩遍
+
+# 絕對禁止
+emoji、#hashtag、超過 55 字、抽象名詞、文青化、說教
+
+# 輸出
+===POST1===
+（貼文內容）
+===END===`;
+
+      userPrompt = `${profileBlock}${freshnessBlock}
+
+【本次主題領域】${domain}
+【本次指定句型】${opener.name}——${opener.hint}
+【random seed】${seed}
+
+請從「${domain}」抽一則小糗事/小觀察/小疑問，**使用「${opener.name}」**寫 1 則 15-55 字的共鳴型短貼文。`;
+
+    } else {
+      // --- Structural viral mode (structured, punchy, info-dense) ---
+      const structure = RESONANCE_STRUCTURES[Math.floor(Math.random() * RESONANCE_STRUCTURES.length)];
+      modeLabel = `結構爆款型 · ${structure.name}`;
+
+      systemPrompt = `你是脆（Threads）上擅長寫「結構化爆款短貼文」的繁體中文文案助手。
 
 爆款的關鍵不是「我也是」的空洞感嘆，是**用一個有結構、有哏、有資訊密度的格式**，把日常觀察包裝成讀完會想轉發的短文。
 
@@ -310,7 +374,7 @@ LINE = 都是工作訊息
 （貼文內容）
 ===END===`;
 
-    const userPrompt = `${profileBlock}${freshnessBlock}
+      userPrompt = `${profileBlock}${freshnessBlock}
 
 【本次主題領域】${domain}
 【本次必用結構】${structure.name}（${structure.chars}）
@@ -318,6 +382,7 @@ LINE = 都是工作訊息
 【random seed】${seed}
 
 請從「${domain}」這個領域發想一個具體題材，**嚴格使用「${structure.name}」結構**寫成 1 則爆款短貼文。記住：對齊系統提示的金標準範例（引體向上/社群軟體/拉屎冷知識/豬體脂），不要自由發揮或混搭結構。有哏才是成功的。`;
+    }
 
     const response = await client.messages.create({
       model: MODEL,
@@ -334,7 +399,7 @@ LINE = 都是工作訊息
       return res.status(500).json({ error: "抽失敗，請再試一次", raw });
     }
 
-    res.json({ post: posts[0], domain, structure: structure.name, usage: response.usage });
+    res.json({ post: posts[0], domain, structure: modeLabel, usage: response.usage });
   } catch (err) {
     console.error("random-resonance error:", err);
     const message = err instanceof Anthropic.APIError ? `${err.status}: ${err.message}` : String(err);
