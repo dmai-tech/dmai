@@ -117,7 +117,15 @@ app.post("/api/generate", async (req, res) => {
 
 你的任務：根據使用者的「個人檔案」、「模板類型」、「主題」，產生 3 則可直接貼上 Threads 的貼文。
 
-硬性規則：
+# 🛑 防 AI 文 / 防被打臉鐵律（最高優先，違反就重寫）
+
+A. **禁止虛構任何「工具／品牌／產品」的功能對比**——尤其不要寫「A 是 X 型 / B 是 Y 型」這種表面對稱、實際亂編的二分。除非主題明確要求對比，且使用者「白名單領域」確實包含兩者。
+B. **禁止瞎掰具體數據**——百分比、年份、人數、排名、體積、距離。若不是常識性事實，一律不寫。
+C. **不確定的事必須 hedge**——用「我記得」「印象中」「聽說」「好像」「應該是」開頭。寧可講不準，也別講錯。
+D. **優先寫「使用者個人體驗」**（你做了什麼、踩到什麼坑、感覺怎樣）——這類不會錯。**少寫機制原理**（東西為什麼這樣運作、技術背後邏輯）——這類最容易被抓包。
+
+# 風格規則
+
 1. 使用繁體中文（台灣用語），避免大陸化詞彙（視頻→影片、信息→資訊、軟件→軟體、質量→品質）。
 2. 每則貼文**嚴格控制在 ${lenProfile.min} 到 ${lenProfile.max} 字之間**（中文字計數，不含標點）。超出或過短都不行。
 3. 參考個人檔案的語調、個性、斷行節奏；但**口頭禪是偶爾點綴，不是每則都用**。
@@ -261,6 +269,12 @@ app.post("/api/random-resonance", async (req, res) => {
 
 你的任務：隨機抽一個大家都經歷過但很少公開講的微小生活觀察，寫成 1 則 1 秒讀完就笑／就點頭的短貼文。
 
+# 🛑 防 AI 文鐵律
+A. 禁止虛構工具/品牌/產品功能對比。
+B. 禁止瞎掰具體數據。
+C. 不確定的事用 hedge 語。
+D. 寫的是「人類普遍經驗」（睡眠、洗澡、吃飯、上班），不是「特定產品如何運作」。
+
 # 最高優先級三條
 A. **短**：嚴格 15-55 字、1-2 句。寧短勿長。
 B. **一看就懂**：不需要讀者思考、解讀、推理。
@@ -301,6 +315,12 @@ emoji、#hashtag、超過 55 字、抽象名詞、文青化、說教
       systemPrompt = `你是脆（Threads）上擅長寫「結構化爆款短貼文」的繁體中文文案助手。
 
 爆款的關鍵不是「我也是」的空洞感嘆，是**用一個有結構、有哏、有資訊密度的格式**，把日常觀察包裝成讀完會想轉發的短文。
+
+# 🛑 防 AI 文鐵律（最高優先）
+A. **禁止虛構任何工具、品牌、產品的功能對比或特性描述**——除非白名單明列。寧可不寫這個題材，也不要瞎掰。
+B. **禁止瞎掰具體數據**——百分比、年份、人數、體積、排名。「冷知識反差梗型」「反常識翻轉型」最容易踩雷，要特別小心。如果不確定數據真假，**改用個人觀察取代「假數據」**。
+C. 不確定的事必須用「我記得」「印象中」「聽說」「好像」hedge。
+D. **題材限定在「人類普遍生活經驗」**（睡眠、吃飯、洗澡、通勤、人際、購物、寵物、天氣）——不要碰「特定產品內部運作」「技術原理」「歷史細節」。
 
 # 五種金標準結構（對齊真實爆款貼文的格式）
 
@@ -441,11 +461,17 @@ app.post("/api/regenerate-draft", async (req, res) => {
 
 你的任務：針對同一個主題，產生 1 則切入角度與「已保留的貼文」完全不同的新版本。
 
-硬性規則：
-1. 使用繁體中文（台灣用語），避免大陸化詞彙（視頻→影片、信息→資訊、軟件→軟體）。
-2. 貼文**嚴格控制在 ${lenProfile.min} 到 ${lenProfile.max} 字之間**（中文字計數）。
-3. 參考個人檔案語調，但**口頭禪偶爾用就好，不要每次都用同一個發語詞**。
-4. **開頭必須和所有保留的貼文不同**——不同發語詞、不同切入角度（可選：故事場景 / 反直覺觀察 / 具體數字 / 問句 / 爭議點）。
+# 🛑 防 AI 文 / 防被打臉鐵律
+A. 禁止虛構工具/品牌/產品的功能對比（除非白名單明列）。
+B. 禁止瞎掰具體數據（%、年份、人數）。
+C. 不確定的事用「我記得」「印象中」「聽說」hedge。
+D. 優先寫個人體驗，少寫機制原理。
+
+# 風格規則
+1. 使用繁體中文（台灣用語）。
+2. 貼文**嚴格控制在 ${lenProfile.min} 到 ${lenProfile.max} 字之間**。
+3. 參考個人檔案語調，但口頭禪偶爾用就好。
+4. **開頭必須和所有保留的貼文不同**——不同發語詞、不同切入角度。
 5. 不要套模板名、不要加 # 或標題。
 6. 第一句要有鉤子。
 7. 如果個人檔案列出避免風格，嚴格避開。
@@ -486,6 +512,93 @@ app.post("/api/regenerate-draft", async (req, res) => {
   }
 });
 
+// ---- Fact check (Layer 2 of anti-AI-文 防護) ----
+app.post("/api/fact-check", async (req, res) => {
+  try {
+    const { drafts = [], profile = {} } = req.body ?? {};
+
+    if (!Array.isArray(drafts) || drafts.length === 0) {
+      return res.status(400).json({ error: "drafts 必須是非空陣列" });
+    }
+
+    const trusted = (profile.trustedDomains || "").trim() || "（使用者沒填白名單）";
+
+    const draftsBlock = drafts
+      .map((d, i) => `===POST${i + 1}===\n${(d || "").trim()}`)
+      .join("\n\n");
+
+    const systemPrompt = `你是一位「事實 / AI 文風險」檢查官，幫使用者在發脆貼文之前抓出可能被打臉的內容。
+
+對於每則貼文，你要：
+1. 評估**整體風險等級**：
+   - 🟢 安全：純個人主觀感受、生活觀察、自嘲——沒有可被驗證的事實聲明。
+   - 🟡 需查證：包含「具體數據」「品牌/工具特性」「歷史事件」「技術概念」——讀者可以查證。
+   - 🔴 高風險：有「品牌或工具的功能對比/二分」、「未經驗證的原理機制」、「捏造的數據」——容易被懂的人秒打臉「AI 文」。
+2. 列出**1-3 個最風險的具體片段**（直接抄原文片段，不要改寫）。
+3. 一句話建議：建議怎麼修（hedge、刪除、改寫成個人體驗）。
+
+判斷重點：
+- 「我覺得 / 我發現 / 是不是只有我」→ 🟢
+- 「Claude 是 X，Codex 是 Y」「90% 的人」「2018 年發明」→ 🔴
+- 涉及具體工具但只描述使用感受（「我用 Claude 寫程式發現⋯」）→ 🟢
+- 涉及白名單以外的工具且講機制 → 🔴
+
+輸出格式（嚴格照下面，每則一段，不要前言後記）：
+===CHECK1===
+LEVEL: 🟢|🟡|🔴
+RISKS: 風險片段 1 | 風險片段 2 | 風險片段 3 （沒有就寫「無」）
+ADVICE: 一句話建議
+===CHECK2===
+...（同上格式）
+===END===`;
+
+    const userPrompt = `【使用者白名單（這些工具/領域是他真的會的）】
+${trusted}
+
+【需要檢查的 ${drafts.length} 則草稿】
+${draftsBlock}
+
+請逐則評估風險並輸出。`;
+
+    const response = await client.messages.create({
+      model: MODEL,
+      max_tokens: 2000,
+      system: systemPrompt,
+      messages: [{ role: "user", content: userPrompt }],
+    });
+
+    const textBlock = response.content.find((b) => b.type === "text");
+    const raw = textBlock ? textBlock.text : "";
+    const results = parseFactCheck(raw, drafts.length);
+
+    res.json({ results, usage: response.usage });
+  } catch (err) {
+    console.error("fact-check error:", err);
+    const message = err instanceof Anthropic.APIError ? `${err.status}: ${err.message}` : String(err);
+    res.status(500).json({ error: message });
+  }
+});
+
+function parseFactCheck(text, expected) {
+  const sections = text.split(/===CHECK\d+===/).slice(1);
+  const results = [];
+  for (const section of sections) {
+    const block = section.split("===END===")[0];
+    const level = (block.match(/LEVEL:\s*(🟢|🟡|🔴)/u) || [])[1] || "🟡";
+    const risksRaw = (block.match(/RISKS:\s*([^\n]+)/) || [])[1] || "";
+    const advice = ((block.match(/ADVICE:\s*([\s\S]+?)(?=\n===|\n$|$)/) || [])[1] || "").trim();
+    const risks = risksRaw
+      .split("|")
+      .map((s) => s.trim())
+      .filter((s) => s && s !== "無");
+    results.push({ level, risks, advice });
+  }
+  while (results.length < expected) {
+    results.push({ level: "🟡", risks: [], advice: "解析失敗，請手動檢查" });
+  }
+  return results.slice(0, expected);
+}
+
 // ---- Helpers ----
 function buildFreshnessBlock(history) {
   if (!Array.isArray(history) || !history.length) return "";
@@ -505,6 +618,9 @@ function buildProfileBlock(profile, overrideVoice) {
   if (profile.voiceHabits) parts.push(`【講話習慣】${profile.voiceHabits}`);
   if (profile.interests) parts.push(`【興趣領域】${profile.interests}`);
   if (profile.avoid) parts.push(`【避免風格／詞彙】${profile.avoid}`);
+  if (profile.trustedDomains) {
+    parts.push(`【⚠️ 我真的用過/有把握講的工具與領域（白名單）】\n${profile.trustedDomains}\n（嚴格規則：涉及任何「白名單以外」的工具、品牌、產品、技術術語時，禁止做功能對比、禁止描述其運作機制、禁止虛構特性。需要提到時改成「我還沒用過」「不熟」「聽說」這類 hedge。）`);
+  }
 
   const voiceSamples = (overrideVoice || "").trim() || (profile.sampleposts || "").trim();
   if (voiceSamples) {

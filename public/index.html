@@ -486,6 +486,68 @@
     }
     .post.regenerating .post-content { opacity: 0.4; }
     .post-content { font-size: 15px; line-height: 1.9; color: var(--ink-soft); }
+
+    /* Fact check */
+    .fact-check-row {
+      margin-top: 24px;
+      padding: 20px 24px;
+      background: transparent;
+      border: 1px dashed var(--line);
+      border-radius: 3px;
+      text-align: center;
+    }
+    .fact-check-btn {
+      background: transparent;
+      color: var(--ink);
+      border: 1px solid var(--ink);
+      padding: 12px 24px;
+      border-radius: 2px;
+      font-family: inherit;
+      font-size: 11.5px;
+      letter-spacing: 0.25em;
+      font-weight: 500;
+      text-transform: uppercase;
+      cursor: pointer;
+      transition: all 0.25s ease;
+    }
+    .fact-check-btn:hover:not(:disabled) { background: var(--ink); color: var(--cream); }
+    .fact-check-btn:disabled { opacity: 0.5; cursor: not-allowed; }
+    .fact-check-hint {
+      font-size: 11.5px;
+      color: var(--muted);
+      margin-top: 12px;
+      letter-spacing: 0.02em;
+    }
+    .fact-badge {
+      display: inline-block;
+      padding: 3px 10px;
+      border-radius: 999px;
+      font-size: 11px;
+      letter-spacing: 0.1em;
+      font-weight: 500;
+      margin-left: 8px;
+      vertical-align: middle;
+    }
+    .fact-badge.green { background: #DCEFE0; color: #2C5C36; border: 1px solid #C0DEC8; }
+    .fact-badge.yellow { background: #FBF1C7; color: #7A5C00; border: 1px solid #E8D684; }
+    .fact-badge.red { background: #F8D7D5; color: #8C3A2E; border: 1px solid #E5A6A0; }
+    .fact-detail {
+      margin-top: 12px;
+      padding: 12px 14px;
+      background: var(--cream-light);
+      border-left: 3px solid var(--line);
+      font-size: 12.5px;
+      line-height: 1.7;
+      color: var(--ink-soft);
+    }
+    .fact-detail.green { border-left-color: #5C9A6A; }
+    .fact-detail.yellow { border-left-color: #C8A848; }
+    .fact-detail.red { border-left-color: #C7625A; }
+    .fact-detail .fact-risks {
+      margin-top: 6px;
+      color: #8C3A2E;
+      font-size: 12px;
+    }
     .loading {
       text-align: center; color: var(--muted);
       padding: 56px 20px; font-size: 11px;
@@ -968,6 +1030,12 @@
               <textarea id="p_avoid" rows="2" placeholder="例：不要太官腔、不要開頭放 emoji、避開「乾貨」「賦能」這類硬梆梆的詞"></textarea>
             </div>
 
+            <div class="field">
+              <label>⚠️ 我真的用過 / 有把握講的工具或領域（防 AI 瞎掰）</label>
+              <div class="hint">列出你真的有實際操作經驗、可以負責任講的工具／品牌／領域。AI 涉及到「白名單以外」的東西時會自動 hedge 或避開，避免你被打臉「果然是 AI 文」。留空 = 沒限制（容易瞎掰，不推薦）。</div>
+              <textarea id="p_trustedDomains" rows="3" placeholder="例：&#10;Claude Code、Cursor、Notion、Google Docs、Capcut、Premiere、Threads、Instagram&#10;（AI 寫作、影片剪輯、社群經營這些大方向我熟）"></textarea>
+            </div>
+
             <div class="btn-row">
               <button type="button" id="profileCancel" class="secondary">取消</button>
               <button type="submit" id="profileSave" class="primary">儲 存 檔 案</button>
@@ -1349,7 +1417,7 @@
     });
 
     // ========== Profile ==========
-    const profileFields = ["name", "personality", "voiceHabits", "interests", "sampleposts", "avoid"];
+    const profileFields = ["name", "personality", "voiceHabits", "interests", "sampleposts", "avoid", "trustedDomains"];
     function loadProfile() {
       const data = readProfileLS();
       profileFields.forEach((k) => { $("p_" + k).value = data[k] || ""; });
@@ -1442,7 +1510,13 @@
         </div>
       `).join("");
       const hint = `<div class="reshuffle-hint">點每則右上 ↻ 可以單獨重抽這則（保留其他兩則）</div>`;
-      $("results").innerHTML = header + postsHtml + hint;
+      const factCheck = `
+        <div class="fact-check-row">
+          <button type="button" class="fact-check-btn" id="factCheckBtn">🔍 事 實 風 險 檢 查</button>
+          <div class="fact-check-hint">發文前先讓 AI 重讀一次，標出哪則「容易被打臉 AI 文」</div>
+        </div>
+      `;
+      $("results").innerHTML = header + postsHtml + hint + factCheck;
 
       $("results").querySelectorAll(".copy-btn").forEach((btn) => {
         btn.addEventListener("click", () => {
@@ -1463,6 +1537,66 @@
           const idx = parseInt(btn.dataset.idx, 10);
           await redrawOne(idx, btn);
         });
+      });
+
+      $("factCheckBtn")?.addEventListener("click", runFactCheck);
+    }
+
+    async function runFactCheck() {
+      const btn = $("factCheckBtn");
+      const originalText = btn.textContent;
+      btn.disabled = true;
+      btn.textContent = "🔍 檢 查 中⋯⋯";
+      try {
+        const res = await fetch("/api/fact-check", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            drafts: genState.posts,
+            profile: readProfileLS(),
+          }),
+        });
+        const data = await res.json();
+        if (!res.ok) throw new Error(data.error || "檢查失敗");
+        applyFactCheckResults(data.results || []);
+        btn.textContent = "✓ 已 檢 查";
+        setTimeout(() => { btn.textContent = originalText; }, 3000);
+      } catch (err) {
+        alert("事實檢查失敗：" + err.message);
+        btn.textContent = originalText;
+      } finally {
+        btn.disabled = false;
+      }
+    }
+
+    function applyFactCheckResults(results) {
+      const posts = document.querySelectorAll("#results .post");
+      results.forEach((r, i) => {
+        const post = posts[i];
+        if (!post) return;
+        const colorMap = { "🟢": "green", "🟡": "yellow", "🔴": "red" };
+        const color = colorMap[r.level] || "yellow";
+        const labelMap = { "🟢": "安全", "🟡": "需查證", "🔴": "高風險" };
+
+        // remove old badges/details
+        post.querySelectorAll(".fact-badge, .fact-detail").forEach((el) => el.remove());
+
+        const headerSpan = post.querySelector(".post-header > span");
+        if (headerSpan) {
+          const badge = document.createElement("span");
+          badge.className = `fact-badge ${color}`;
+          badge.textContent = `${r.level} ${labelMap[r.level] || ""}`;
+          headerSpan.appendChild(badge);
+        }
+
+        const detail = document.createElement("div");
+        detail.className = `fact-detail ${color}`;
+        let html = `<strong>建議：</strong>${escapeHtml(r.advice || "")}`;
+        if (r.risks?.length) {
+          html += `<div class="fact-risks"><strong>風險片段：</strong>${r.risks.map((x) => "「" + escapeHtml(x) + "」").join("、")}</div>`;
+        }
+        detail.innerHTML = html;
+        post.appendChild(detail);
       });
     }
 
